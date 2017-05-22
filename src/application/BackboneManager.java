@@ -20,7 +20,7 @@ public class BackboneManager extends Application {
     private Canvas map;
     private GraphicsContext gc;
 	private static Vanet rede = new Vanet();
-	private static final float RANGE = 100;
+	private static final float RANGE = 300;
 	private int OBUCount;
 	
 	@Override
@@ -32,7 +32,7 @@ public class BackboneManager extends Application {
 			mBorderPane = new BorderPane();
 			Group root = new Group();
 			
-			map = new Canvas(600, 600);
+			map = new Canvas(1200, 600);
 			gc = map.getGraphicsContext2D();
 			Singleton.setGraphicsContext(gc);
 			
@@ -44,14 +44,26 @@ public class BackboneManager extends Application {
 	            }
 	        });
 	        
-	        Button atualizar = new Button("Atualizar");
+	        Button step1 = new Button("Step+1");
 	        
-	        atualizar.setOnAction(new EventHandler<ActionEvent>() {
+	        step1.setOnAction(new EventHandler<ActionEvent>() {
 	            @Override public void handle(ActionEvent e) {
 	                rede.atualizarVizinhos();
 	                rede.imprimirVizinhos();
 	                rede.step();
 	              
+	            }
+	        });
+	        
+	        Button step10 = new Button("Step+10");
+	        
+	        step10.setOnAction(new EventHandler<ActionEvent>() {
+	            @Override public void handle(ActionEvent e) {
+	            	for (int i = 0; i<10; i++) {
+		                rede.atualizarVizinhos();
+		                rede.imprimirVizinhos();
+		                rede.step();
+	            	}
 	            }
 	        });
 	        
@@ -65,7 +77,7 @@ public class BackboneManager extends Application {
 	            }
 	        });
 	        
-	        HBox menu = new HBox(atualizar, limpar);	        
+	        HBox menu = new HBox(step1, step10, limpar);	        
 	        
 	        mBorderPane.setCenter(map);
 	        mBorderPane.setTop(menu);

@@ -19,6 +19,7 @@ public class OBU {
 	GraphicsContext gc;
 	private OBU OBUCandidature;
 	private int lastBeaconTime;
+	private boolean candidate = true;
 
 	public OBU(float x, float y, float range, String name) {
 		this.x = x;
@@ -57,9 +58,9 @@ public class OBU {
 	public void message(OBU source, int code, OBU destination) {
 		switch (code) {
 		case 1: //Beacon
-			if (!bMState) {
+			if (!bMState && candidate) {
 				OBUCandidature = source;
-				lastBeaconTime = 50;
+				lastBeaconTime = 150;
 				//Calculando o backoff
 				System.out.println("Valores OBU " + this.name);
 				double fitFactor = Math.sqrt(Math.pow(source.getX() - this.x, 2) + Math.pow(source.getY() - this.y, 2)) / range;
@@ -77,8 +78,18 @@ public class OBU {
 			}
 			break;
 		case 3: //Candidature message
-			if (!bMState) {
-				
+			if (bMState) {
+				if (this.equals(destination)) {
+					System.out.println("Recebi uma candidatura. OBU " + this.name);
+					source.message(this, 2, source);
+				}
+			} else {
+				if (!this.equals(destination)) {
+					backoff = -1;
+					inTheNet();
+				} else {
+					System.out.println("Recebi uma candidatura, tem alguma coisa errada. OBU " + this.name);
+				}
 			}
 		default:
 			break;
@@ -88,6 +99,13 @@ public class OBU {
 	public void step() {
 		doBackoff();
 		doLastTimeBackoff();
+	}
+	
+	private void inTheNet() {
+		lastBeaconTime = -1;
+		candidate = false;
+		gc.setFill(Paint.valueOf("BLUE"));
+        gc.fillOval(x-10,y-10,20,20);
 	}
 	
 	private void doLastTimeBackoff() {
@@ -113,7 +131,7 @@ public class OBU {
 		gc.setFont(Font.font(20));
 		gc.fillText("" + backoff, x, y-10);
 		if (backoff == 0 && !bMState) {
-			//TODO Send candidature
+			sendCandidature();
 		}
 		if (backoff > 0)
 			backoff--;
@@ -128,6 +146,12 @@ public class OBU {
 	public void sendBeacon() {
 		for (OBU obu : vizinhos) {
 			obu.message(this, 1, null);
+		}
+	}
+	
+	public void sendCandidature() {
+		for (OBU obu : vizinhos) {
+			obu.message(this, 3, OBUCandidature);
 		}
 	}
 	
