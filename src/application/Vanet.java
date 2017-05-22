@@ -9,8 +9,8 @@ public class Vanet {
 		mapa = new ArrayList<OBU>();
 	}
 
-	public void addOBU(OBU carro) {
-		mapa.add(carro);
+	public void addOBU(float x, float y, float range, String name) {
+		mapa.add(new OBU(x, y, range, name));
 	}
 	
 	public void atualizarVizinhos() {
@@ -18,7 +18,8 @@ public class Vanet {
 			for (OBU obuViz : mapa) {
 				if (!obu.equals(obuViz)) {
 					if (Math.sqrt(Math.pow(obuViz.getX() - obu.getX(), 2) + Math.pow(obuViz.getY() - obu.getY(), 2)) <= obu.getRange() ) {
-						obu.addVizinho(obuViz);
+						if(!obu.isVizinho(obuViz))
+							obu.addVizinho(obuViz);
 					}
 				}
 			}
@@ -26,10 +27,21 @@ public class Vanet {
 	}
 	
 	public void imprimirVizinhos() {
+		System.out.println("Imprimindo vizinhos:");
 		for (OBU obu : mapa) {
-			System.out.println("Carro: " + obu.getName());
+			System.out.print("= " + obu.getName());
 			obu.imprimeVizinhos();
-			
+			System.out.println();
 		}
+	}
+	
+	public void step() {
+		for (OBU obu : mapa) {
+			obu.step();
+		}
+	}
+	
+	public void clear() {
+		mapa = new ArrayList<OBU>();
 	}
 }
