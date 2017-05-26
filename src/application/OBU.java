@@ -20,6 +20,7 @@ public class OBU {
 	private OBU OBUCandidature;
 	private int lastBeaconTime;
 	private boolean candidate = true;
+	private boolean bbStarted = false;
 
 	public OBU(float x, float y, float range, String name) {
 		this.x = x;
@@ -35,7 +36,10 @@ public class OBU {
 		//Desenhando o OBU na tela
 		gc.setFill(Paint.valueOf("BLACK"));
         gc.fillOval(x-10,y-10,20,20);
-        gc.strokeOval(x-range, y-range, range*2, range*2);
+        if (Singleton.isDebugMode()) {
+    		gc.setStroke(Paint.valueOf("BLACK"));
+        	gc.strokeOval(x-range, y-range, range*2, range*2);
+		}
         gc.setFont(Font.font(20));
 		gc.fillText(name, x-30, y+10);
 	}
@@ -59,6 +63,7 @@ public class OBU {
 		switch (code) {
 		case 1: //Beacon
 			if (!bMState && candidate) {
+				candidate = false;
 				OBUCandidature = source;
 				lastBeaconTime = 150;
 				//Calculando o backoff
@@ -73,8 +78,11 @@ public class OBU {
 			break;
 		case 2: //Ack_Winner
 			if (this.equals(destination)) {
+				gc.setStroke(Paint.valueOf("RED"));
+		        gc.setLineWidth(2);
+		        gc.strokeLine(this.x, this.y, source.getX(), source.getY());
 				becomeBM();
-				sendBeacon();
+				sendMessage(1, null);
 			}
 			break;
 		case 3: //Candidature message
@@ -84,11 +92,11 @@ public class OBU {
 					source.message(this, 2, source);
 				}
 			} else {
-				if (!this.equals(destination)) {
+				if (destination.equals(OBUCandidature)) {
 					backoff = -1;
 					inTheNet();
 				} else {
-					System.out.println("Recebi uma candidatura, tem alguma coisa errada. OBU " + this.name);
+					//Nothing to do
 				}
 			}
 		default:
@@ -98,7 +106,7 @@ public class OBU {
 	
 	public void step() {
 		doBackoff();
-		doLastTimeBackoff();
+		//doLastTimeBackoff();
 	}
 	
 	private void inTheNet() {
@@ -110,14 +118,16 @@ public class OBU {
 	
 	private void doLastTimeBackoff() {
 		//Imprimindo valor de lastBeaconTime na tela
-		gc.setFill(Paint.valueOf("BLUE"));
-		gc.fillRect(x-30, y-30, 30, 20);
-		gc.setFill(Paint.valueOf("RED"));
-		gc.setFont(Font.font(20));
-		gc.fillText("" + lastBeaconTime, x-30, y-10);
+        if (Singleton.isDebugMode()) {
+			gc.setFill(Paint.valueOf("BLUE"));
+			gc.fillRect(x-30, y-30, 30, 20);
+			gc.setFill(Paint.valueOf("RED"));
+			gc.setFont(Font.font(20));
+			gc.fillText("" + lastBeaconTime, x-30, y-10);
+        }
 		if (lastBeaconTime==0 && !bMState) {
 			becomeBM();
-			sendBeacon();
+			sendMessage(1, null);
 		}
 		if (lastBeaconTime > 0)
 			lastBeaconTime--;
@@ -125,13 +135,15 @@ public class OBU {
 	
 	private void doBackoff() {
 		//Imprimindo valor de backoff na tela
-		gc.setFill(Paint.valueOf("BLUE"));
-		gc.fillRect(x, y-30, 30, 20);
-		gc.setFill(Paint.valueOf("RED"));
-		gc.setFont(Font.font(20));
-		gc.fillText("" + backoff, x, y-10);
+        if (Singleton.isDebugMode()) {
+			gc.setFill(Paint.valueOf("BLUE"));
+			gc.fillRect(x, y-30, 30, 20);
+			gc.setFill(Paint.valueOf("RED"));
+			gc.setFont(Font.font(20));
+			gc.fillText("" + backoff, x, y-10);
+        }
 		if (backoff == 0 && !bMState) {
-			sendCandidature();
+			sendMessage(3, OBUCandidature);
 		}
 		if (backoff > 0)
 			backoff--;
@@ -143,15 +155,17 @@ public class OBU {
         gc.fillOval(x-10,y-10,20,20);
 	}
 	
-	public void sendBeacon() {
+	private void sendMessage(int code, OBU destination) {
 		for (OBU obu : vizinhos) {
-			obu.message(this, 1, null);
+			obu.message(this, code, destination);
 		}
 	}
 	
-	public void sendCandidature() {
-		for (OBU obu : vizinhos) {
-			obu.message(this, 3, OBUCandidature);
+	public void initBackbone() {
+		if (!bbStarted) {
+			bbStarted = true;
+			becomeBM();
+			sendMessage(1, null);
 		}
 	}
 	

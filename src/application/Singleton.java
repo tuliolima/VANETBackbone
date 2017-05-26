@@ -6,6 +6,7 @@ public class Singleton {
 	
 	private static Singleton instance = null;
 	private static GraphicsContext gc;
+	private static boolean debugMode = false;
 	
 	protected Singleton() {
 		// Exists only to defeat instantiation.
@@ -24,5 +25,13 @@ public class Singleton {
 	
 	public static GraphicsContext getGraphicsContext() {
 		return gc;
+	}
+
+	public static boolean isDebugMode() {
+		return debugMode;
+	}
+
+	public static void setDebugMode(boolean debugMode) {
+		Singleton.debugMode = debugMode;
 	}
 }
